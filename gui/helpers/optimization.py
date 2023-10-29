@@ -2,40 +2,44 @@ import cvxpy as cp
 import numpy as np
 import pandas as pd
 
-def optimize_portfolio(returns, current_weights, big_tokens=["BTC", "ETH"], cash_tokens=["USDT", "USDC", "BUSD"], alpha=0.05):
+def optimize_portfolio(returns, big_weight, alt_weight, cash_weight, current_balance, big_tokens=["BTC", "ETH"],
+                       cash_tokens=["USDT", "USDC", "BUSD"]):
+
     n = returns.shape[1]
     mu = returns.mean().values
     Sigma = returns.cov().values
-    
+
     w = cp.Variable(n)
     gamma = cp.Parameter(nonneg=True)
     ret = mu.T @ w
     risk = cp.quad_form(w, Sigma)
-    objective = cp.Maximize(ret - gamma*risk)
-    
-    constraints = [
-        cp.sum(w) == 1,
-        w >= 0
-    ]
-    
+    objective = cp.Maximize(ret - gamma * risk)
 
-    for token, weight in current_weights.items():
-        index = list(returns.columns).index(token)
-        if token in big_tokens:
-            constraints.append(w[index] >= weight * (1 - alpha))
-            constraints.append(w[index] <= weight * (1 + alpha))
-        elif token in cash_tokens:
-            constraints.append(w[index] == weight)
-        else:
-            constraints.append(w[index] >= 0)
-            constraints.append(w[index] <= weight * (1 + alpha))
-    
+    constraints = [w >= 0, cp.sum(w) == 1]
+
+    big_total = cp.sum(w[returns.columns.isin(big_tokens)])
+    alt_total = cp.sum(w[~returns.columns.isin(big_tokens + cash_tokens)])
+    cash_total = cp.sum(w[returns.columns.isin(cash_tokens)])
+    #
+    constraints.extend([
+        big_total == big_weight / 100,
+        alt_total == alt_weight / 100,
+        cash_total == cash_weight / 100
+    ])
+
     prob = cp.Problem(objective, constraints)
-    gamma.value = 0.1
-    prob.solve()
-    
+    gamma.value = 0.5
+    prob.solve(solver = cp.ECOS)
 
-    return dict(zip(returns.columns, w.value))
+    weights = dict(zip(returns.columns, w.value))
+
+    amounts = {}
+
+    for token in weights.keys():
+        local_amount = current_balance * weights[token]
+        amounts[token] = local_amount
+
+    return weights, amounts
 
 
 def compute_returns(data, start_day=0, days=7):

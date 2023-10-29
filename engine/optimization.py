@@ -67,6 +67,4 @@ def next_day_update(data, current_day_index):
     
     
     next_day_optimized_weights = optimize_portfolio(next_day_returns)
-    
-    return next_day_optimized_weights
 
