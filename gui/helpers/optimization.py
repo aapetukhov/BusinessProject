@@ -38,7 +38,6 @@ def optimize_portfolio(returns, current_weights, big_tokens=["BTC", "ETH"], cash
     return dict(zip(returns.columns, w.value))
 
 
-
 def compute_returns(data, start_day=0, days=7):
     all_returns = {}
 
@@ -70,6 +69,9 @@ def next_day_update(data, current_day_index):
     
     return next_day_optimized_weights
 
+
 def count_pnl(all_data: dict, cur_day_idx: int, weights: list) -> float:
-    
+    pass
+
+def plot_pnl():
     pass
