@@ -69,3 +69,7 @@ def next_day_update(data, current_day_index):
     next_day_optimized_weights = optimize_portfolio(next_day_returns)
     
     return next_day_optimized_weights
+
+def count_pnl(all_data: dict, cur_day_idx: int, weights: list) -> float:
+    
+    pass
